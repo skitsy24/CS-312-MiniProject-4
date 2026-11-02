@@ -243,6 +243,34 @@ app.post("/api/posts", async (req, res) => {
     }
 });
 
+app.patch("/api/posts/:id", async (req, res) => {
+    if (!req.session.user) {
+        return res.status(401).json({ error: "Sign in to edit a post." });
+    }
+
+    const title = trimmedField(req.body?.title);
+    const body = req.body?.body;
+    if (!/^\d+$/.test(req.params.id) || !title || title.length > 255 ||
+        typeof body !== "string" || !body.trim()) {
+        return res.status(400).json({ error: "Enter a title and post body." });
+    }
+
+    try {
+        const result = await db.query(
+            `UPDATE blogs SET title = $1, body = $2
+             WHERE blog_id = $3 AND creator_user_id = $4 RETURNING *`,
+            [title, body, req.params.id, req.session.user.userId]
+        );
+        if (result.rowCount === 0) {
+            return res.status(403).json({ error: "You cannot edit this post." });
+        }
+        res.json(result.rows[0]);
+    } catch (error) {
+        console.error("Could not edit post:", error);
+        res.status(500).json({ error: "Could not edit post." });
+    }
+});
+
 app.get("/", async (req, res) => {
     const result = await db.query("SELECT * FROM blogs");   
 

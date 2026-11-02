@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { postJson } from './api'
+import { sendJson } from './api'
 import PostList from './PostList'
 import Signin from './Signin'
 import Signup from './Signup'
@@ -37,7 +37,7 @@ function App() {
     setAuthError('')
     setLoggingOut(true)
     try {
-      await postJson('/api/logout')
+      await sendJson('/api/logout')
       setCurrentUser(null)
     } catch (requestError) {
       setAuthError(requestError.message)

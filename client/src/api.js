@@ -1,6 +1,6 @@
-export async function postJson(path, body = {}) {
+export async function sendJson(path, body = {}, method = 'POST') {
   const response = await fetch(path, {
-    method: 'POST',
+    method,
     headers: { 'Content-Type': 'application/json' },
     credentials: 'same-origin',
     body: JSON.stringify(body),

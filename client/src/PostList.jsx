@@ -5,6 +5,7 @@ function PostList({ currentUser }) {
   const [posts, setPosts] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [editingId, setEditingId] = useState(null)
 
   useEffect(() => {
     const controller = new AbortController()
@@ -28,13 +29,22 @@ function PostList({ currentUser }) {
     return () => controller.abort()
   }, [])
 
+  function addPost(post) {
+    setPosts((current) => [post, ...current])
+    setError('')
+  }
+
+  function updatePost(updated) {
+    setPosts((current) => current.map((post) =>
+      post.blog_id === updated.blog_id ? updated : post
+    ))
+    setEditingId(null)
+  }
+
   return (
     <>
-      {currentUser && !loading && (
-        <BlogPostForm onCreated={(post) => {
-          setPosts((current) => [post, ...current])
-          setError('')
-        }} />
+      {currentUser && !loading && editingId === null && (
+        <BlogPostForm onSave={addPost} />
       )}
       {currentUser === null && <p>To create a post, <a href="/signin">sign in</a> or <a href="/signup">sign up</a>.</p>}
 
@@ -47,9 +57,22 @@ function PostList({ currentUser }) {
           <ul className="post-list">
             {posts.map((post) => (
               <li key={post.blog_id}>
-                <h3>{post.title}</h3>
-                <p>By {post.creator_name}</p>
-                <p className="post-content">{post.body}</p>
+                {editingId === post.blog_id && currentUser?.userId === post.creator_user_id ? (
+                  <BlogPostForm
+                    post={post}
+                    onSave={updatePost}
+                    onCancel={() => setEditingId(null)}
+                  />
+                ) : (
+                  <>
+                    <h3>{post.title}</h3>
+                    <p>By {post.creator_name}</p>
+                    <p className="post-content">{post.body}</p>
+                    {currentUser?.userId === post.creator_user_id && (
+                      <button className="button" type="button" onClick={() => setEditingId(post.blog_id)}>Edit</button>
+                    )}
+                  </>
+                )}
               </li>
             ))}
           </ul>

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { postJson } from './api'
+import { sendJson } from './api'
 
 export default function AuthForm({ signup }) {
   const [values, setValues] = useState({ user_id: '', name: '', password: '' })
@@ -21,7 +21,7 @@ export default function AuthForm({ signup }) {
 
     try {
       const payload = signup ? values : { user_id: values.user_id, password: values.password }
-      const data = await postJson(signup ? '/api/signup' : '/api/signin', payload)
+      const data = await sendJson(signup ? '/api/signup' : '/api/signin', payload)
       if (signup) {
         setMessage(data.message)
         setValues({ ...values, password: '' })
