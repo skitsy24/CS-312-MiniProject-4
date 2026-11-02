@@ -271,6 +271,29 @@ app.patch("/api/posts/:id", async (req, res) => {
     }
 });
 
+app.delete("/api/posts/:id", async (req, res) => {
+    if (!req.session.user) {
+        return res.status(401).json({ error: "Sign in to delete a post." });
+    }
+    if (!/^\d+$/.test(req.params.id)) {
+        return res.status(400).json({ error: "Invalid post ID." });
+    }
+
+    try {
+        const result = await db.query(
+            "DELETE FROM blogs WHERE blog_id = $1 AND creator_user_id = $2",
+            [req.params.id, req.session.user.userId]
+        );
+        if (result.rowCount === 0) {
+            return res.status(403).json({ error: "You cannot delete this post." });
+        }
+        res.json({ message: "Post deleted." });
+    } catch (error) {
+        console.error("Could not delete post:", error);
+        res.status(500).json({ error: "Could not delete post." });
+    }
+});
+
 app.get("/", async (req, res) => {
     const result = await db.query("SELECT * FROM blogs");   
 

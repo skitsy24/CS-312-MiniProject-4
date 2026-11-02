@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react'
 import BlogPostForm from './BlogPostForm'
+import { sendJson } from './api'
 
 function PostList({ currentUser }) {
   const [posts, setPosts] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [editingId, setEditingId] = useState(null)
+  const [deletingId, setDeletingId] = useState(null)
 
   useEffect(() => {
     const controller = new AbortController()
@@ -41,6 +43,21 @@ function PostList({ currentUser }) {
     setEditingId(null)
   }
 
+  async function deletePost(post) {
+    if (!window.confirm(`Delete "${post.title}"?`)) return
+    setError('')
+    setDeletingId(post.blog_id)
+
+    try {
+      await sendJson(`/api/posts/${post.blog_id}`, {}, 'DELETE')
+      setPosts((current) => current.filter((item) => item.blog_id !== post.blog_id))
+    } catch (requestError) {
+      setError(requestError.message)
+    } finally {
+      setDeletingId(null)
+    }
+  }
+
   return (
     <>
       {currentUser && !loading && editingId === null && (
@@ -53,7 +70,7 @@ function PostList({ currentUser }) {
         {loading && <p>Loading posts...</p>}
         {error && <p className="alert" role="alert">{error}</p>}
         {!loading && !error && posts.length === 0 && <p>No posts yet.</p>}
-        {!loading && !error && posts.length > 0 && (
+        {!loading && posts.length > 0 && (
           <ul className="post-list">
             {posts.map((post) => (
               <li key={post.blog_id}>
@@ -69,7 +86,12 @@ function PostList({ currentUser }) {
                     <p>By {post.creator_name}</p>
                     <p className="post-content">{post.body}</p>
                     {currentUser?.userId === post.creator_user_id && (
-                      <button className="button" type="button" onClick={() => setEditingId(post.blog_id)}>Edit</button>
+                      <div className="form-actions">
+                        <button className="button" type="button" onClick={() => setEditingId(post.blog_id)} disabled={deletingId === post.blog_id}>Edit</button>
+                        <button className="button" type="button" onClick={() => deletePost(post)} disabled={deletingId === post.blog_id}>
+                          {deletingId === post.blog_id ? 'Deleting...' : 'Delete'}
+                        </button>
+                      </div>
                     )}
                   </>
                 )}
