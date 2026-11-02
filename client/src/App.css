@@ -12,6 +12,7 @@ a { color: #244f85; }
 
 .post-form {
   max-width: 32rem;
+  margin-bottom: 2rem;
   padding: 1.5rem;
   border: 1px solid #ccc5b8;
   background: #fffdf8;
@@ -47,3 +48,4 @@ a { color: #244f85; }
 .form-footer { margin-bottom: 0; }
 .post-list { padding-left: 1.5rem; }
 .post-list li { padding: 0.75rem 0; border-bottom: 1px solid #ccc5b8; }
+.post-content { white-space: pre-wrap; }

@@ -211,11 +211,35 @@ app.post("/logout", (req, res, next) => {
 
 app.get("/api/posts", async (req, res) => {
     try {
-        const result = await db.query("SELECT * FROM blogs");
+        const result = await db.query("SELECT * FROM blogs ORDER BY blog_id DESC");
         res.json(result.rows);
     } catch (error) {
         console.error("Failed to load posts:", error);
         res.status(500).json({ error: "Could not load posts." });
+    }
+});
+
+app.post("/api/posts", async (req, res) => {
+    if (!req.session.user) {
+        return res.status(401).json({ error: "Sign in to create a post." });
+    }
+
+    const title = trimmedField(req.body?.title);
+    const body = req.body?.body;
+    if (!title || title.length > 255 || typeof body !== "string" || !body.trim()) {
+        return res.status(400).json({ error: "Enter a title and post body." });
+    }
+
+    try {
+        const result = await db.query(
+            `INSERT INTO blogs (creator_name, creator_user_id, title, body, date_created)
+             VALUES ($1, $2, $3, $4, NOW()) RETURNING *`,
+            [req.session.user.name, req.session.user.userId, title, body]
+        );
+        res.status(201).json(result.rows[0]);
+    } catch (error) {
+        console.error("Could not create post:", error);
+        res.status(500).json({ error: "Could not create post." });
     }
 });
 

@@ -76,7 +76,7 @@ function App() {
       ) : page === '/signup' ? (
         currentUser ? <p>You are already signed in.</p> : <Signup />
       ) : (
-        <PostList />
+        <PostList currentUser={currentUser} />
       )}
     </main>
   )

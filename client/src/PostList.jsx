@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
+import BlogPostForm from './BlogPostForm'
 
-function PostList() {
+function PostList({ currentUser }) {
   const [posts, setPosts] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -28,17 +29,33 @@ function PostList() {
   }, [])
 
   return (
-    <section aria-labelledby="posts-heading">
-      <h2 id="posts-heading">Recent Posts</h2>
-      {loading && <p>Loading posts...</p>}
-      {error && <p className="alert" role="alert">{error}</p>}
-      {!loading && !error && posts.length === 0 && <p>No posts yet.</p>}
-      {!loading && !error && posts.length > 0 && (
-        <ul className="post-list">
-          {posts.map((post) => <li key={post.blog_id}>{post.title}</li>)}
-        </ul>
+    <>
+      {currentUser && !loading && (
+        <BlogPostForm onCreated={(post) => {
+          setPosts((current) => [post, ...current])
+          setError('')
+        }} />
       )}
-    </section>
+      {currentUser === null && <p>To create a post, <a href="/signin">sign in</a> or <a href="/signup">sign up</a>.</p>}
+
+      <section aria-labelledby="posts-heading">
+        <h2 id="posts-heading">Recent Posts</h2>
+        {loading && <p>Loading posts...</p>}
+        {error && <p className="alert" role="alert">{error}</p>}
+        {!loading && !error && posts.length === 0 && <p>No posts yet.</p>}
+        {!loading && !error && posts.length > 0 && (
+          <ul className="post-list">
+            {posts.map((post) => (
+              <li key={post.blog_id}>
+                <h3>{post.title}</h3>
+                <p>By {post.creator_name}</p>
+                <p className="post-content">{post.body}</p>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+    </>
   )
 }
 
