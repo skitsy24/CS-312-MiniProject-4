@@ -2,6 +2,7 @@ import express from "express";
 import pg from "pg";
 import dotenv from "dotenv";
 import session from "express-session";
+import { hashPassword, verifyPassword } from "./passwords.js";
 
 dotenv.config();
 
@@ -35,6 +36,62 @@ app.use((req, res, next) => {
     next();
 });
 
+function validCredentials(userId, password) {
+    return typeof userId === "string" && userId.trim().length > 0 &&
+        userId.trim().length <= 255 && typeof password === "string" &&
+        password.length > 0 && password.length <= 1024;
+}
+
+function validName(name) {
+    return typeof name === "string" && name.trim().length > 0 &&
+        name.trim().length <= 255;
+}
+
+function trimmedField(value) {
+    return typeof value === "string" ? value.trim() : "";
+}
+
+async function registerUser(userId, name, password) {
+    try {
+        await db.query(
+            "INSERT INTO users (user_id, password, name) VALUES ($1, $2, $3)",
+            [userId, await hashPassword(password), name]
+        );
+        return true;
+    } catch (error) {
+        if (error.code === "23505") return false;
+        throw error;
+    }
+}
+
+async function authenticateUser(userId, password) {
+    const result = await db.query(
+        "SELECT user_id, name, password FROM users WHERE user_id = $1",
+        [userId]
+    );
+    const user = result.rows[0];
+    if (!user || !(await verifyPassword(password, user.password))) return null;
+
+    if (!user.password.startsWith("scrypt:")) {
+        await db.query(
+            "UPDATE users SET password = $1 WHERE user_id = $2 AND password = $3",
+            [await hashPassword(password), userId, user.password]
+        );
+    }
+
+    return { userId: user.user_id, name: user.name };
+}
+
+function startSession(req, user) {
+    return new Promise((resolve, reject) => {
+        req.session.regenerate((error) => {
+            if (error) return reject(error);
+            req.session.user = user;
+            req.session.save((saveError) => saveError ? reject(saveError) : resolve());
+        });
+    });
+}
+
 // middleware to require login for editing
 function requireLogin(req, res, next) {
     if (!req.session.user) {
@@ -44,30 +101,82 @@ function requireLogin(req, res, next) {
     next();
 }
 
+app.get("/api/me", (req, res) => {
+    res.json({ user: req.session.user || null });
+});
+
+app.post("/api/signup", async (req, res) => {
+    const userId = trimmedField(req.body?.user_id);
+    const name = trimmedField(req.body?.name);
+    const password = req.body?.password;
+
+    if (!validCredentials(userId, password) || !validName(name)) {
+        return res.status(400).json({ error: "Enter a user ID, name, and password." });
+    }
+
+    try {
+        if (!(await registerUser(userId, name, password))) {
+            return res.status(409).json({ error: "That user ID is already taken." });
+        }
+        res.status(201).json({ message: "Account created. Please sign in." });
+    } catch (error) {
+        console.error("Signup failed:", error);
+        res.status(500).json({ error: "Could not create account." });
+    }
+});
+
+app.post("/api/signin", async (req, res) => {
+    const userId = trimmedField(req.body?.user_id);
+    const password = req.body?.password;
+
+    if (!validCredentials(userId, password)) {
+        return res.status(400).json({ error: "Enter a user ID and password." });
+    }
+
+    try {
+        const user = await authenticateUser(userId, password);
+        if (!user) {
+            return res.status(401).json({ error: "Incorrect user ID or password." });
+        }
+        await startSession(req, user);
+        res.json({ user });
+    } catch (error) {
+        console.error("Signin failed:", error);
+        res.status(500).json({ error: "Could not sign in." });
+    }
+});
+
+app.post("/api/logout", (req, res) => {
+    req.session.destroy((error) => {
+        if (error) {
+            console.error("Logout failed:", error);
+            return res.status(500).json({ error: "Could not sign out." });
+        }
+        res.clearCookie("connect.sid");
+        res.json({ message: "Signed out." });
+    });
+});
+
 app.get("/signup", (req, res) => {
     res.render("signup", { error: null, userId: "", name: "" });
 });
 
 app.post("/signup", async (req, res) => {
-    const userId = req.body.user_id;
-    const name = req.body.name;
+    const userId = trimmedField(req.body.user_id);
+    const name = trimmedField(req.body.name);
     const password = req.body.password;
 
-    const result = await db.query(
-        "SELECT * FROM users WHERE user_id = $1",
-        [userId]
-    );
+    if (!validCredentials(userId, password) || !validName(name)) {
+        return res.render("signup", {
+            error: "Enter a user ID, name, and password.", userId, name
+        });
+    }
 
-    if (result.rows.length > 0) {
+    if (!(await registerUser(userId, name, password))) {
         return res.render("signup", {
             error: "That user ID is already taken.", userId, name
         });
     }
-
-    await db.query(
-        "INSERT INTO users (user_id, password, name) VALUES ($1, $2, $3)",
-        [userId, password, name]
-    );
 
     res.redirect("/signin");
 });
@@ -77,26 +186,18 @@ app.get("/signin", (req, res) => {
 });
 
 app.post("/signin", async (req, res) => {
-    const userId = req.body.user_id;
+    const userId = trimmedField(req.body.user_id);
     const password = req.body.password;
 
-    const result = await db.query(
-        "SELECT * FROM users WHERE user_id = $1 AND password = $2",
-        [userId, password]
-    );
-
-    if (result.rows.length === 0) {
+    const user = validCredentials(userId, password)
+        ? await authenticateUser(userId, password) : null;
+    if (!user) {
         return res.render("signin", {
             error: "Incorrect user ID or password."
         });
     }
 
-    const user = result.rows[0];
-    req.session.user = {
-        userId: user.user_id,
-        name: user.name
-    };
-
+    await startSession(req, user);
     res.redirect("/");
 });
 
