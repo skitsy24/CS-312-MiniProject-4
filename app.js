@@ -19,6 +19,7 @@ const port = 3000;
 app.set("view engine", "ejs");
 
 app.use(express.urlencoded({ extended: true }));
+app.use(express.json());
 
 app.use(express.static("public"));
 app.use("/bootstrap", express.static("node_modules/bootstrap/dist"));
@@ -105,6 +106,16 @@ app.post("/logout", (req, res, next) => {
         res.clearCookie("connect.sid");
         res.redirect("/");
     });
+});
+
+app.get("/api/posts", async (req, res) => {
+    try {
+        const result = await db.query("SELECT * FROM blogs");
+        res.json(result.rows);
+    } catch (error) {
+        console.error("Failed to load posts:", error);
+        res.status(500).json({ error: "Could not load posts." });
+    }
 });
 
 app.get("/", async (req, res) => {
