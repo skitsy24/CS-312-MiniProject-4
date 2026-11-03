@@ -47,38 +47,39 @@ function App() {
   }
 
   return (
-    <main className="blog-page">
+    <div className="container blog-page">
       <header className="site-header">
         <h1><a href="/">Our Blog</a></h1>
-        {currentUser === undefined ? (
-          <p>Checking sign-in status...</p>
-        ) : currentUser ? (
-          <div className="account-nav">
-            <span>Welcome, {currentUser.name}</span>
-            <button className="button" type="button" onClick={handleLogout} disabled={loggingOut}>
-              {loggingOut ? 'Signing Out...' : 'Log Out'}
-            </button>
-          </div>
-        ) : (
-          <nav className="account-nav" aria-label="Account">
-            <a href="/signin">Sign In</a>
-            <a href="/signup">Sign Up</a>
+        <p>Welcome to our blog.</p>
+        {currentUser === null && (
+          <nav className="mt-3 d-flex gap-2" aria-label="Account">
+            <a className="btn btn-primary" href="/signin">Sign In</a>
+            <a className="btn btn-primary" href="/signup">Sign Up</a>
           </nav>
         )}
       </header>
 
-      {authError && <p className="alert" role="alert">{authError}</p>}
+      <main>
+        {currentUser === undefined && <p>Checking sign-in status...</p>}
+        {currentUser && (
+          <section className="mb-4" aria-label="Your account">
+            <p className="mb-2">Welcome, {currentUser.name}</p>
+            <button className="btn btn-primary" type="button" onClick={handleLogout} disabled={loggingOut}>
+              {loggingOut ? 'Signing Out...' : 'Log Out'}
+            </button>
+          </section>
+        )}
+        {authError && <p className="alert alert-danger" role="alert">{authError}</p>}
 
-      {currentUser === undefined && page !== '/' ? (
-        <p>Checking sign-in status...</p>
-      ) : page === '/signin' ? (
-        currentUser ? <p>You are already signed in.</p> : <Signin />
-      ) : page === '/signup' ? (
-        currentUser ? <p>You are already signed in.</p> : <Signup />
-      ) : (
-        <PostList currentUser={currentUser} />
-      )}
-    </main>
+        {currentUser === undefined && page !== '/' ? null : page === '/signin' ? (
+          currentUser ? <p>You are already signed in.</p> : <Signin />
+        ) : page === '/signup' ? (
+          currentUser ? <p>You are already signed in.</p> : <Signup />
+        ) : (
+          <PostList currentUser={currentUser} />
+        )}
+      </main>
+    </div>
   )
 }
 

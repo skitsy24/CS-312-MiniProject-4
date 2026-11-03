@@ -29,49 +29,54 @@ export default function Signup() {
   return (
     <section className="post-form" aria-labelledby="signup-heading">
       <h2 id="signup-heading">Sign Up</h2>
-      {error && <p className="alert" role="alert">{error}</p>}
-      {message && <p className="notice" role="status">{message} <a href="/signin">Sign in</a>.</p>}
+      {error && <p className="alert alert-danger" role="alert">{error}</p>}
+      {message && <p className="alert alert-success" role="status">{message} <a href="/signin">Sign in</a>.</p>}
 
       <form onSubmit={handleSubmit}>
-        <label className="form-label">
-          User ID
+        <div className="mb-3">
+          <label className="form-label" htmlFor="user_id">User ID</label>
           <input
             className="form-control"
+            id="user_id"
+            name="user_id"
             value={userId}
             onChange={(event) => setUserId(event.target.value)}
             autoComplete="username"
             required
           />
-        </label>
+        </div>
 
-        <label className="form-label">
-          Name
+        <div className="mb-3">
+          <label className="form-label" htmlFor="name">Name</label>
           <input
             className="form-control"
+            id="name"
+            name="name"
             value={name}
             onChange={(event) => setName(event.target.value)}
             autoComplete="name"
             required
           />
-        </label>
+        </div>
 
-        <label className="form-label">
-          Password
+        <div className="mb-3">
+          <label className="form-label" htmlFor="password">Password</label>
           <input
             className="form-control"
+            id="password"
+            name="password"
             type="password"
             value={password}
             onChange={(event) => setPassword(event.target.value)}
             autoComplete="new-password"
             required
           />
-        </label>
+        </div>
 
-        <button className="button" type="submit" disabled={busy}>
+        <button className="btn btn-primary" type="submit" disabled={busy}>
           {busy ? 'Creating Account...' : 'Sign Up'}
         </button>
       </form>
-      <p className="form-footer">Already have an account? <a href="/signin">Sign in</a>.</p>
     </section>
   )
 }

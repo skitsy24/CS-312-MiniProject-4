@@ -7,6 +7,7 @@ export default function BlogPostForm({ post, onSave, onCancel }) {
   const [body, setBody] = useState(post?.body ?? '')
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
+  const headingId = editing ? `edit-heading-${post.blog_id}` : 'create-heading'
 
   async function handleSubmit(event) {
     event.preventDefault()
@@ -32,23 +33,23 @@ export default function BlogPostForm({ post, onSave, onCancel }) {
   }
 
   return (
-    <section className="post-form" aria-label={editing ? 'Edit post' : 'Create a post'}>
-      <h2>{editing ? 'Edit Post' : 'Create a Post'}</h2>
-      {error && <p className="alert" role="alert">{error}</p>}
+    <section className={editing ? 'post-form' : 'post-form mb-5'} aria-labelledby={headingId}>
+      <h2 id={headingId}>{editing ? 'Edit Post' : 'Create a Post'}</h2>
+      {error && <p className="alert alert-danger" role="alert">{error}</p>}
       <form onSubmit={handleSubmit}>
-        <label className="form-label">
-          Post Title
-          <input className="form-control" value={title} onChange={(event) => setTitle(event.target.value)} maxLength={255} required />
-        </label>
-        <label className="form-label">
-          Post
-          <textarea className="form-control" value={body} onChange={(event) => setBody(event.target.value)} rows={5} required />
-        </label>
-        <div className="form-actions">
-          <button className="button" type="submit" disabled={busy}>
+        <div className="mb-3">
+          <label className="form-label" htmlFor="post-title">Post Title</label>
+          <input className="form-control" id="post-title" name="title" value={title} onChange={(event) => setTitle(event.target.value)} maxLength={255} required />
+        </div>
+        <div className="mb-3">
+          <label className="form-label" htmlFor="post-body">Post</label>
+          <textarea className="form-control" id="post-body" name="body" value={body} onChange={(event) => setBody(event.target.value)} rows={editing ? 8 : 5} required />
+        </div>
+        <div className="d-flex align-items-center gap-3">
+          <button className="btn btn-primary" type="submit" disabled={busy}>
             {busy ? 'Saving...' : editing ? 'Save Changes' : 'Publish Post'}
           </button>
-          {editing && <button className="button" type="button" onClick={onCancel} disabled={busy}>Cancel</button>}
+          {editing && <button className="btn btn-link" type="button" onClick={onCancel} disabled={busy}>Cancel</button>}
         </div>
       </form>
     </section>

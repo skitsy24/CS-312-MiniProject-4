@@ -24,37 +24,40 @@ export default function Signin() {
   return (
     <section className="post-form" aria-labelledby="signin-heading">
       <h2 id="signin-heading">Sign In</h2>
-      {error && <p className="alert" role="alert">{error}</p>}
+      {error && <p className="alert alert-danger" role="alert">{error}</p>}
 
       <form onSubmit={handleSubmit}>
-        <label className="form-label">
-          User ID
+        <div className="mb-3">
+          <label className="form-label" htmlFor="user_id">User ID</label>
           <input
             className="form-control"
+            id="user_id"
+            name="user_id"
             value={userId}
             onChange={(event) => setUserId(event.target.value)}
             autoComplete="username"
             required
           />
-        </label>
+        </div>
 
-        <label className="form-label">
-          Password
+        <div className="mb-3">
+          <label className="form-label" htmlFor="password">Password</label>
           <input
             className="form-control"
+            id="password"
+            name="password"
             type="password"
             value={password}
             onChange={(event) => setPassword(event.target.value)}
             autoComplete="current-password"
             required
           />
-        </label>
+        </div>
 
-        <button className="button" type="submit" disabled={busy}>
+        <button className="btn btn-primary" type="submit" disabled={busy}>
           {busy ? 'Signing In...' : 'Sign In'}
         </button>
       </form>
-      <p className="form-footer">Need an account? <a href="/signup">Sign up</a>.</p>
     </section>
   )
 }

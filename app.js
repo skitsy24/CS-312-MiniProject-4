@@ -211,7 +211,7 @@ app.post("/logout", (req, res, next) => {
 
 app.get("/api/posts", async (req, res) => {
     try {
-        const result = await db.query("SELECT * FROM blogs ORDER BY blog_id DESC");
+        const result = await db.query("SELECT * FROM blogs");
         res.json(result.rows);
     } catch (error) {
         console.error("Failed to load posts:", error);
